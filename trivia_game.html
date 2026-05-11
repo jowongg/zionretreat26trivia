@@ -1,0 +1,576 @@
+<!DOCTYPE html>
+<html lang="zh-HK">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>冷知識 Trivia 大挑戰</title>
+<style>
+  * { box-sizing: border-box; margin: 0; padding: 0; }
+  body {
+    font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", "PingFang HK", "Microsoft JhengHei", sans-serif;
+    background: linear-gradient(135deg, #46178f 0%, #864cbf 100%);
+    min-height: 100vh;
+    color: #fff;
+    overflow-x: hidden;
+  }
+  .page { display: none; min-height: 100vh; padding: 24px; }
+  .page.active { display: block; animation: fadeIn 0.4s ease; }
+  @keyframes fadeIn { from { opacity: 0; transform: translateY(8px); } to { opacity: 1; transform: translateY(0); } }
+
+  /* ===== MAIN PAGE ===== */
+  .hero {
+    text-align: center;
+    padding: 32px 16px 24px;
+  }
+  .hero h1 {
+    font-size: 2.8rem;
+    font-weight: 900;
+    text-shadow: 3px 3px 0 rgba(0,0,0,0.25);
+    letter-spacing: -1px;
+  }
+  .hero p { margin-top: 8px; font-size: 1.1rem; opacity: 0.9; }
+
+  .category-section { max-width: 1100px; margin: 0 auto; }
+  .category {
+    background: rgba(255,255,255,0.07);
+    border-radius: 16px;
+    padding: 20px;
+    margin-bottom: 20px;
+    backdrop-filter: blur(10px);
+    border: 1px solid rgba(255,255,255,0.1);
+  }
+  .category h2 {
+    font-size: 1.5rem;
+    margin-bottom: 14px;
+    display: flex;
+    align-items: center;
+    gap: 10px;
+  }
+  .question-grid {
+    display: grid;
+    grid-template-columns: repeat(auto-fill, minmax(60px, 1fr));
+    gap: 10px;
+  }
+  .q-btn {
+    aspect-ratio: 1;
+    border: none;
+    border-radius: 12px;
+    font-size: 1.2rem;
+    font-weight: 800;
+    color: #fff;
+    cursor: pointer;
+    transition: transform 0.15s, box-shadow 0.15s;
+    background: linear-gradient(135deg, #e21b3c, #ff5e7e);
+    box-shadow: 0 4px 0 rgba(0,0,0,0.2);
+    position: relative;
+  }
+  .q-btn.easy { background: linear-gradient(135deg, #26890c, #5cc436); }
+  .q-btn.medium { background: linear-gradient(135deg, #d89e00, #f5c443); }
+  .q-btn.hard { background: linear-gradient(135deg, #e21b3c, #ff5e7e); }
+  .q-btn:hover { transform: translateY(-2px); box-shadow: 0 6px 0 rgba(0,0,0,0.25); }
+  .q-btn:active { transform: translateY(2px); box-shadow: 0 2px 0 rgba(0,0,0,0.2); }
+  .q-btn.done::after {
+    content: "✓";
+    position: absolute;
+    top: 2px;
+    right: 4px;
+    font-size: 0.8rem;
+    background: rgba(255,255,255,0.3);
+    border-radius: 50%;
+    width: 18px;
+    height: 18px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+  }
+  .legend {
+    display: flex;
+    justify-content: center;
+    gap: 16px;
+    margin: 16px 0 28px;
+    flex-wrap: wrap;
+    font-size: 0.95rem;
+  }
+  .legend-item { display: flex; align-items: center; gap: 6px; }
+  .legend-dot { width: 16px; height: 16px; border-radius: 4px; }
+  .stats-bar {
+    text-align: center;
+    margin: 12px 0 24px;
+    font-size: 1rem;
+    opacity: 0.9;
+  }
+  .reset-btn {
+    background: rgba(255,255,255,0.15);
+    border: 1px solid rgba(255,255,255,0.3);
+    color: #fff;
+    padding: 6px 14px;
+    border-radius: 20px;
+    cursor: pointer;
+    font-size: 0.85rem;
+    margin-left: 10px;
+  }
+  .reset-btn:hover { background: rgba(255,255,255,0.25); }
+
+  /* ===== QUESTION PAGE ===== */
+  .q-header {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    max-width: 1100px;
+    margin: 0 auto 20px;
+    padding: 8px 4px;
+  }
+  .q-number {
+    background: rgba(0,0,0,0.3);
+    padding: 8px 18px;
+    border-radius: 30px;
+    font-weight: 700;
+  }
+  .difficulty-tag {
+    padding: 6px 14px;
+    border-radius: 20px;
+    font-size: 0.9rem;
+    font-weight: 700;
+  }
+  .diff-easy { background: #26890c; }
+  .diff-medium { background: #d89e00; }
+  .diff-hard { background: #e21b3c; }
+
+  .question-box {
+    background: #fff;
+    color: #333;
+    border-radius: 16px;
+    padding: 32px 24px;
+    max-width: 1100px;
+    margin: 0 auto 24px;
+    text-align: center;
+    box-shadow: 0 10px 30px rgba(0,0,0,0.3);
+  }
+  .question-box .question-text {
+    font-size: 1.6rem;
+    font-weight: 700;
+    line-height: 1.5;
+  }
+  .answers-grid {
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    gap: 14px;
+    max-width: 1100px;
+    margin: 0 auto;
+  }
+  .answer-btn {
+    border: none;
+    border-radius: 12px;
+    padding: 22px 20px;
+    font-size: 1.15rem;
+    font-weight: 600;
+    color: #fff;
+    cursor: pointer;
+    text-align: left;
+    display: flex;
+    align-items: center;
+    gap: 14px;
+    min-height: 90px;
+    line-height: 1.4;
+    transition: transform 0.1s, opacity 0.2s;
+    box-shadow: 0 5px 0 rgba(0,0,0,0.2);
+    font-family: inherit;
+  }
+  .answer-btn:hover:not(:disabled) { transform: translateY(-3px); box-shadow: 0 8px 0 rgba(0,0,0,0.25); }
+  .answer-btn:active:not(:disabled) { transform: translateY(2px); box-shadow: 0 3px 0 rgba(0,0,0,0.2); }
+  .answer-btn:disabled { cursor: default; opacity: 0.4; }
+  .answer-btn.selected-correct { opacity: 1 !important; outline: 4px solid #fff; }
+  .answer-btn.selected-wrong { opacity: 0.5; outline: 4px solid #fff; }
+  .answer-btn.correct-reveal { opacity: 1 !important; }
+
+  .ans-a { background: #e21b3c; }
+  .ans-b { background: #1368ce; }
+  .ans-c { background: #d89e00; }
+  .ans-d { background: #26890c; }
+
+  .answer-shape {
+    width: 36px;
+    height: 36px;
+    background: rgba(255,255,255,0.25);
+    border-radius: 8px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    flex-shrink: 0;
+    font-size: 1.4rem;
+    font-weight: 900;
+  }
+
+  /* ===== RESULT PAGE ===== */
+  .result-container { max-width: 800px; margin: 0 auto; text-align: center; }
+  .result-banner {
+    padding: 30px;
+    border-radius: 20px;
+    margin-bottom: 24px;
+    box-shadow: 0 10px 30px rgba(0,0,0,0.3);
+  }
+  .result-banner.correct { background: linear-gradient(135deg, #26890c, #5cc436); }
+  .result-banner.wrong { background: linear-gradient(135deg, #e21b3c, #ff5e7e); }
+  .result-icon { font-size: 5rem; margin-bottom: 10px; }
+  .result-title { font-size: 2.4rem; font-weight: 900; margin-bottom: 6px; }
+  .result-sub { font-size: 1.1rem; opacity: 0.95; }
+
+  .answer-reveal {
+    background: #fff;
+    color: #333;
+    border-radius: 16px;
+    padding: 24px;
+    margin-bottom: 20px;
+    text-align: left;
+  }
+  .answer-reveal h3 {
+    color: #46178f;
+    font-size: 1.1rem;
+    margin-bottom: 8px;
+    text-transform: uppercase;
+    letter-spacing: 1px;
+  }
+  .correct-answer-text {
+    font-size: 1.3rem;
+    font-weight: 700;
+    color: #26890c;
+    margin-bottom: 16px;
+    padding: 12px;
+    background: #f0f9ed;
+    border-radius: 8px;
+    border-left: 4px solid #26890c;
+  }
+  .explanation {
+    font-size: 1.05rem;
+    line-height: 1.7;
+    color: #444;
+    white-space: pre-line;
+  }
+
+  .nav-buttons {
+    display: flex;
+    gap: 14px;
+    justify-content: center;
+    flex-wrap: wrap;
+  }
+  .nav-btn {
+    border: none;
+    padding: 14px 28px;
+    border-radius: 30px;
+    font-size: 1rem;
+    font-weight: 700;
+    cursor: pointer;
+    color: #fff;
+    transition: transform 0.15s;
+    font-family: inherit;
+  }
+  .nav-btn:hover { transform: translateY(-2px); }
+  .btn-home { background: #46178f; }
+  .btn-next { background: #26890c; }
+  .btn-back { background: rgba(255,255,255,0.2); border: 1px solid rgba(255,255,255,0.4); }
+
+  @media (max-width: 600px) {
+    .hero h1 { font-size: 2rem; }
+    .question-box .question-text { font-size: 1.2rem; }
+    .answers-grid { grid-template-columns: 1fr; }
+    .answer-btn { min-height: 70px; font-size: 1rem; }
+  }
+</style>
+</head>
+<body>
+
+<!-- ===== PAGE 1: MAIN MENU ===== -->
+<div class="page active" id="page-main">
+  <div class="hero">
+    <h1>🎮 冷知識 Trivia</h1>
+    <p>50 條題目 · 5 大類別 · 百萬富翁式挑戰</p>
+  </div>
+
+  <div class="stats-bar">
+    答對: <span id="stat-correct">0</span> / 答題: <span id="stat-total">0</span>
+    <button class="reset-btn" onclick="resetProgress()">重新開始</button>
+  </div>
+
+  <div class="legend">
+    <div class="legend-item"><div class="legend-dot" style="background:#26890c"></div>簡單</div>
+    <div class="legend-item"><div class="legend-dot" style="background:#d89e00"></div>中等</div>
+    <div class="legend-item"><div class="legend-dot" style="background:#e21b3c"></div>困難</div>
+  </div>
+
+  <div class="category-section" id="category-section"></div>
+</div>
+
+<!-- ===== PAGE 2: QUESTION ===== -->
+<div class="page" id="page-question">
+  <div class="q-header">
+    <button class="nav-btn btn-back" onclick="goHome()">← 返回</button>
+    <span class="q-number" id="q-number">第 1 題</span>
+    <span class="difficulty-tag" id="q-difficulty">簡單</span>
+  </div>
+
+  <div class="question-box">
+    <div class="question-text" id="question-text"></div>
+  </div>
+
+  <div class="answers-grid" id="answers-grid"></div>
+</div>
+
+<!-- ===== PAGE 3: RESULT ===== -->
+<div class="page" id="page-result">
+  <div class="result-container">
+    <div class="result-banner" id="result-banner">
+      <div class="result-icon" id="result-icon"></div>
+      <div class="result-title" id="result-title"></div>
+      <div class="result-sub" id="result-sub"></div>
+    </div>
+
+    <div class="answer-reveal" id="answer-reveal">
+      <h3>正確答案</h3>
+      <div class="correct-answer-text" id="correct-answer-text"></div>
+      <h3>解釋</h3>
+      <div class="explanation" id="explanation"></div>
+    </div>
+
+    <div class="nav-buttons">
+      <button class="nav-btn btn-home" onclick="goHome()">🏠 返回主頁</button>
+    </div>
+  </div>
+</div>
+
+<script>
+// ===== TRIVIA DATA =====
+const QUESTIONS = [
+  // ANIMALS 1-9
+  {id:1, cat:"動物", q:"世界上第一個「貓門」(cat flap) 係點樣發明出嚟？", a:["一位農夫為咗等貓出去捉老鼠","一位獸醫為咗等病貓自由出入","一位科學家喺暗房做光學實驗時搞出嚟","中世紀修道院僧侶設計嚟養貓"], correct:2, exp:"艾薩克·牛頓 (Isaac Newton) 喺暗房做光學實驗時，因為隻貓不停推開門搞亂實驗（漏光入嚟），所以索性喺門上開咗個有蓋嘅小洞俾隻貓自由出入，就成為史上第一個貓門。"},
+  {id:2, cat:"動物", q:"鯊魚係點樣瞓覺嘅？", a:["鑽入海底沙堆裡面靜止瞓","完全停低，浮喺水面瞓","用半邊腦瞓覺","同其他鯊魚輪流睇守瞓"], correct:2, exp:"因為好多鯊魚要靠不停游動先可以將水推過鰓部呼吸（被動換氣），所以佢哋進化出「半邊腦瞓覺」嘅能力——一邊大腦休息嘅時候，另一邊大腦繼續控制游泳同呼吸。"},
+  {id:3, cat:"動物", q:"樹熊（無尾熊）嘅指紋同邊種動物極其相似，連法醫都可能分唔到？", a:["樹懶 (Sloth)","袋熊 (Wombat) —— 樹熊嘅近親","人類","大熊貓"], correct:2, exp:"雖然樹熊嘅近親係袋熊，外型上同樹懶、熊貓都好似，但唯獨佢哋嘅指紋紋路同人類幾乎一模一樣，喺顯微鏡下都好難分辨，係趨同進化 (convergent evolution) 嘅奇妙例子。"},
+  {id:4, cat:"動物", q:"螞蟻身體入面缺少咗邊一個器官？", a:["心臟","大腦","肺","眼睛"], correct:2, exp:"螞蟻冇肺，係靠身體側面嘅氣孔 (spiracles) 直接同空氣交換氧氣；佢哋有心臟（管狀心臟）、大腦（雖然細）同眼睛（複眼）。"},
+  {id:5, cat:"動物", q:"一隻乳牛一日排放嘅甲烷氣體，大約可以填滿幾多支 1 公升嘅樽？", a:["約 50 支","約 100 支","約 400 支","約 1000 支"], correct:2, exp:"乳牛打嗝同放屁排出嘅甲烷，每日大約 200–500 公升，係全球溫室氣體嘅主要來源之一。"},
+  {id:6, cat:"動物", q:"鸚嘴魚 (Parrotfish) 每晚瞓覺前會做咩防禦動作？", a:["鑽入沙裡面","分泌一個黏液泡包住自己","變色偽裝成石頭","群聚保護彼此"], correct:1, exp:"鸚嘴魚瞓覺前會分泌一層黏液泡包住自己，可以遮蓋氣味、阻擋寄生蟲，仲可以警告佢有掠食者接近。"},
+  {id:7, cat:"動物", q:"達爾馬提亞犬（斑點狗 Dalmatian）一出世嗰陣身上有幾多個斑點？", a:["0個","約 30 個","約 50 個","約 100 個"], correct:0, exp:"達爾馬提亞犬出世時全身純白色，斑點要幾星期之後先慢慢顯現，到大約一個月先有完整圖案。"},
+  {id:8, cat:"動物", q:"非洲品種嘅巴辛吉犬 (Basenji) 唔識正常吠叫，咁佢哋發出嚟嘅聲音最似邊一種唱腔？", a:["顫音 (Trill / Warbling) —— 喺兩個鄰近音調之間快速震顫，類似鳥鳴","滑音 (Glissando / Portamento) —— 喺音調之間平滑連續地滑動","約德爾調 (Yodel) —— 真聲同假聲之間大幅度跳音切換","假聲哼鳴 (Falsetto humming) —— 用聲帶高頻部份輕柔閉口哼唱"], correct:2, exp:"巴辛吉犬嘅喉嚨結構 (laryngeal ventricle) 較淺、聲帶構造特殊，所以發聲時會自動喺低音同高音之間「跳音」切換，正係 yodel（約德爾調）嘅特徵。\n\nYodel 最早起源自瑞士阿爾卑斯山牧民用嚟跨山谷溝通嘅一種唱法，因為斷裂嘅高低音可以傳得好遠。巴辛吉犬因此被叫做「冇吠聲嘅狗」(barkless dog) 或「會唱歌嘅狗」(yodel dog)。"},
+  {id:9, cat:"動物", q:"貓嘅味蕾完全嘗唔到邊一種味道？", a:["鹹味","酸味","苦味","甜味"], correct:3, exp:"因為兩個負責甜味受體 (Tas1r2) 嘅基因之中有一個喺幾百萬年前永久關閉咗，所以貓係天生「食肉動物」，唔需要分辨甜味。"},
+
+  // CHURCH 10-19
+  {id:10, cat:"基督教", q:"史上第一本用印刷機印刷出版嘅書係《聖經》(Gutenberg Bible)，咁佢最初係用咩語言印刷？", a:["希臘文","希伯來文","拉丁文","古英語"], correct:2, exp:"由約翰內斯·古騰堡 (Johannes Gutenberg) 喺 1450 年代印刷，當時通行嘅版本係拉丁文嘅《通俗譯本》(Vulgate)。"},
+  {id:11, cat:"基督教", q:"邊一個節日曾經喺英國被法律明文禁止慶祝？", a:["復活節","萬聖節","聖誕節","新年"], correct:2, exp:"1644–1660 年由清教徒 (Puritans) 統治期間禁止，佢哋認為聖誕節太奢華、有異教色彩，當時連食聖誕布丁同烤鵝都係違法。"},
+  {id:12, cat:"基督教", q:"「Trinity」（三位一體）呢個字其實有冇出現過喺聖經入面？", a:["有，喺新約多次出現","有，但只係喺舊約","冇","有，喺啟示錄"], correct:2, exp:"「Trinity」呢個字從來冇喺聖經出現過，概念係由神學家逐步發展，到 4 世紀先成為正式教義。"},
+  {id:13, cat:"基督教", q:"教宗著嘅紅色鞋（papal red shoes）象徵咩意義？", a:["教廷嘅至高權力","殉道者所流嘅血","紅衣主教嘅地位","羅馬帝國嘅傳承"], correct:1, exp:"紅色代表為信仰殉道嘅基督徒同基督本身受難所流嘅血，提醒教宗要追隨耶穌嘅腳步。"},
+  {id:14, cat:"基督教", q:"梵蒂岡係全世界最細嘅獨立國家，面積大約幾多平方公里？", a:["約 0.49 平方公里","約 0.95 平方公里","約 1.27 平方公里","約 2.18 平方公里"], correct:0, exp:"梵蒂岡只有約 0.49 平方公里（49 公頃），比好多城市嘅一個地段仲細，但係一個獨立主權國家；第二細嘅國家摩納哥有 2.02 平方公里。"},
+  {id:15, cat:"基督教", q:"邊一位係宗教改革 (Reformation) 嘅領袖，引發新教 (Protestant) 嘅誕生？", a:["約翰加爾文 (John Calvin)","慈運理 (Huldrych Zwingli)","馬丁路德 (Martin Luther)","約翰諾克斯 (John Knox)"], correct:2, exp:"1517 年 10 月 31 日，德國神學家馬丁路德喺維滕堡 (Wittenberg) 教堂門口釘上《九十五條論綱》(95 Theses)，抗議天主教會販售贖罪券。呢個事件被視為宗教改革嘅起點，最終令基督教分裂出新教，影響全世界至今。"},
+  {id:16, cat:"基督教", q:"早期基督徒喺羅馬帝國時期被迫害，佢哋用咩秘密符號互相識別教友身份？", a:["十字架 (Cross)","魚形符號 (Ichthys / ΙΧΘΥΣ)","鴿子 (Dove)","燃燒嘅火焰 (Burning Flame)"], correct:1, exp:"ΙΧΘΥΣ 喺希臘文係「魚」嘅意思，亦係「Ἰησοῦς Χριστὸς Θεοῦ Υἱὸς Σωτήρ」(耶穌基督，神嘅兒子，救主) 嘅縮寫。當早期基督徒喺路上遇到陌生人，會用腳隨意畫一條弧線；如果對方畫多一條完成魚形，就證明係教友。十字架要到 4 世紀後（君士坦丁大帝合法化基督教後）先成為主流標誌。"},
+  {id:17, cat:"基督教", q:"「Catholic」（天主教 / 大公）呢個字源自希臘文，原意係咩？", a:["神聖","純潔","「普世」/「universal」","永恆"], correct:2, exp:"來自希臘文 \"katholikos\"，意思係「普世」/「無所不包」，反映教會係屬於全世界嘅信仰群體。"},
+  {id:18, cat:"基督教", q:"西曆紀年法入面，「B.C.」同「A.D.」分別代表咩意思？", a:["B.C. = Before Calendar / A.D. = After Date","B.C. = Before Christ / A.D. = Anno Dei（拉丁文「神嘅年代」）","B.C. = Before Christ / A.D. = Anno Domini（拉丁文「主嘅年代」）","B.C. = Biblical Calendar / A.D. = Apostolic Date"], correct:2, exp:"B.C. 係英文 \"Before Christ\" 嘅縮寫，意思係「耶穌出生前」；A.D. 係拉丁文 \"Anno Domini\" 嘅縮寫，意思係「主嘅年代」（即耶穌出生之後）。\n\n同 B 選項嘅分別：雖然「Anno Dei」（神嘅年代）都係合理嘅拉丁文，但歷史上 6 世紀僧侶 Dionysius Exiguus 制定紀年法時，正式採用嘅係「Domini」（主／救主嘅意思），強調耶穌係「主」嘅身份，而唔係泛指嘅「神」。所以耶穌一出世，就係 A.D. 1 年。現代學術界亦開始用 B.C.E. (Before Common Era) 同 C.E. (Common Era) 嚟避免宗教色彩。"},
+  {id:19, cat:"基督教", q:"《聖經》最早係喺幾時 / 邊一個世紀被翻譯成英文？", a:["12 世紀","14 世紀 (1380 年代)","16 世紀","17 世紀"], correct:1, exp:"由英國神學家約翰·威克里夫 (John Wycliffe) 同佢嘅追隨者喺 1380 年代將拉丁文《聖經》翻譯成中古英語，比馬丁路德嘅德文版仲要早成 130 幾年。"},
+
+  // HISTORY 20-30
+  {id:20, cat:"歷史", q:"二戰期間有隻大丹犬叫 Juliana 因為做咗咩而獲頒藍十字勳章？", a:["救咗主人一命","屙尿熄滅咗一個燃燒彈","偵測到地雷","咬死敵兵"], correct:1, exp:"1941 年一個燃燒彈跌入屋，Juliana 直接屙尿喺燃燒彈上面將佢熄滅，因此獲頒英國藍十字動物勳章。"},
+  {id:21, cat:"歷史", q:"史上最成功嘅海盜其實係個女人，叫咩名？", a:["安妮·邦尼","鄭一嫂","鄭二嫂","鄭五嫂"], correct:1, exp:"19 世紀初期鄭一嫂（鄭石氏 / Ching Shih）指揮超過 8 萬名海盜同 1,800 艘船，連大清帝國、英國同葡萄牙海軍都打佢唔贏，最後成功談判退休。"},
+  {id:22, cat:"歷史", q:"史上最長嘅戰爭打咗幾耐？對戰雙方係邊兩個？", a:["100 年戰爭，英法","200 年戰爭，俄土","335 年戰爭，荷蘭 vs 錫利群島","500 年戰爭，威尼斯 vs 奧斯曼"], correct:2, exp:"1651–1986 年荷蘭同英國錫利群島 (Isles of Scilly) 之間嘅「戰爭」，因為當年未正式簽和約而延續咗 335 年；最特別嘅係全程冇任何一發子彈、亦冇人死亡，係史上最荒謬嘅戰爭。"},
+  {id:23, cat:"歷史", q:"「大爆炸宇宙論」(Big Bang Theory) 最初係由邊種身份嘅人提出？", a:["一位英國天文學家","一位天主教神父","一位德國物理學家","一位美國數學家"], correct:1, exp:"由比利時嘅天主教神父兼物理學家 Georges Lemaître 喺 1927 年提出，比愛因斯坦嘅理論更早提出宇宙膨脹概念。佢身兼神職同科學家身份，反映宗教同科學唔一定衝突；連教宗庇護十二世都曾經喺 1951 年公開引用佢嘅理論支持《創世紀》。"},
+  {id:24, cat:"歷史", q:"邊個歐洲探險家比哥倫布早約 500 年抵達美洲？", a:["馬可孛羅","麥哲倫","維京人","達伽馬"], correct:2, exp:"約公元 1000 年，挪威維京人 Leif Eriksson 已經抵達今日加拿大紐芬蘭嘅蘭塞奧茲牧草地 (L'Anse aux Meadows)，比哥倫布 (1492) 早咗近 500 年。"},
+  {id:25, cat:"歷史", q:"1900 至 1920 年，邊一項運動曾經係正式嘅夏季奧運項目？", a:["拔河","撞球","賽鴿","鬥牛"], correct:0, exp:"拔河曾經喺 1900–1920 年五屆奧運入面係正式項目，1920 年之後被剔除。"},
+  {id:26, cat:"歷史", q:"1962 年喺非洲坦干伊喀（今坦桑尼亞）一間女校爆發咗咩奇怪嘅集體事件？", a:["集體暈倒","集體狂笑","集體失憶","集體哭泣"], correct:1, exp:"集體狂笑（「笑聲流行病」），由幾位學生開始嘅大笑漸漸蔓延到整間學校，再傳到附近多間村落，持續數月之久，最後超過 1,000 人受影響。"},
+  {id:27, cat:"歷史", q:"1518 年法國史特拉斯堡居民集體爆發咗咩奇怪行為？", a:["跳舞瘟疫","走路瘟疫","唱歌瘟疫","笑聲瘟疫"], correct:0, exp:"居民不停跳舞，連續數日唔停，部份人因為疲勞、中風或心臟病發作死亡，原因到今日仲係未解之謎。"},
+  {id:28, cat:"歷史", q:"古埃及金字塔嘅建造工人，每日嘅工資係用咩支付？", a:["黃金","白銀","啤酒同麵包","大米同魚"], correct:2, exp:"工人每日大約收到 4–5 公升啤酒同麵包做工資；啤酒當時不單係飲品，仲係主要嘅熱量同營養來源。"},
+  {id:29, cat:"歷史", q:"古希臘奧運會嘅運動員以咩裝束比賽？", a:["短褲同上衣","戰袍","長袍","全裸"], correct:3, exp:"「Gymnastics」（體操）一詞源自希臘文「gymnos」，意思就係「裸體」；古希臘人認為裸體比賽係尊敬諸神嘅表現。"},
+  {id:30, cat:"歷史", q:"第一位上太空嘅女性 Valentina Tereshkova 1963 年喺太空 3 日，缺少咗咩日用品？", a:["牙刷","食物","衣物","水"], correct:0, exp:"蘇聯地面控制中心忘記咗執牙刷，所以佢喺太空中三日冇辦法刷牙，事後同記者開玩笑話佢用手指代替。"},
+
+  // FOOD 31-40
+  {id:31, cat:"食物", q:"將胡蘿蔔最初培育成現今橙色之前，原本最常見係咩色？", a:["紅色","紫色","綠色","黑色"], correct:1, exp:"古代胡蘿蔔最常見係紫色（亦有白色、黃色），17 世紀荷蘭人為紀念奧蘭治王朝 (House of Orange)，先培育出橙色胡蘿蔔。"},
+  {id:32, cat:"食物", q:"邊個城市先後幾年蟬聯全球最多米芝蓮星嘅城市？", a:["巴黎","紐約","東京","香港"], correct:2, exp:"東京多年蟬聯榜首，擁有超過 200 間米芝蓮餐廳，遠超巴黎。"},
+  {id:33, cat:"食物", q:"邊一種水果（蔬果）喺歐洲歷史上長期被誤以為有劇毒，甚至俾人叫做「毒蘋果」？", a:["馬鈴薯","蕃茄 (Tomato)","鳳梨","茄子"], correct:1, exp:"18 世紀歐洲貴族用錫鉛合金 (pewter) 餐盤食蕃茄，蕃茄嘅酸會溶出鉛令人中毒，所以以為係蕃茄有毒；直到 1820 年 Robert Johnson 喺新澤西州 Salem 法庭外公開食一籃蕃茄，先打破呢個迷思。"},
+  {id:34, cat:"食物", q:"人類同香蕉嘅基因相似度大約有幾多 %？", a:["約 30%","約 60%","約 80%","約 95%"], correct:1, exp:"人類同香蕉共享約 60% 嘅基因，因為地球上所有生物都源自同一個祖先，基本嘅細胞功能基因相似度好高。"},
+  {id:35, cat:"食物", q:"蕃茄醬 (Ketchup) 最早源自邊個國家？", a:["美國","意大利","中國","法國"], correct:2, exp:"最早係 17 世紀中國嘅魚醬，叫「鮭汁」(kê-tsiap)，英國商人帶回歐洲，後來美國人加入蕃茄演變成今日嘅 ketchup。"},
+  {id:36, cat:"食物", q:"「Honeymoon」（蜜月）呢個字嘅起源同邊種飲品有關？", a:["啤酒","紅酒","蜂蜜酒","香檳"], correct:2, exp:"古巴比倫新婚男人會飲足一個月（lunar 月）嘅蜂蜜酒 Mead，相信蜂蜜可以促進生育，「蜜月」呢個字就係咁嚟。"},
+  {id:37, cat:"食物", q:"紅色食用色素 Carminic acid 來自咩？", a:["紅色花瓣","紅蘿蔔","胭脂蟲","化學合成"], correct:2, exp:"Carminic acid 係從胭脂蟲 (Dactylopius coccus) 磨碎提取，廣泛用喺糖果、紅色染料、化妝品等。"},
+  {id:38, cat:"食物", q:"漢堡包 (Hamburger) 名字源自邊個國家？", a:["美國","英國","德國","法國"], correct:2, exp:"漢堡包名字源自德國北部嘅港口城市「漢堡」(Hamburg)。19 世紀漢堡係德國最繁忙嘅海港之一，當地有一種叫「Hamburg steak」嘅碎牛肉排好出名；隨德國移民傳入美國後，當地人加上麵包夾住食，演變成今日嘅 Hamburger。雖然漢堡包喺美國發揚光大，但個名字嘅根源係德國漢堡市。"},
+  {id:39, cat:"食物", q:"人嘅味蕾大約幾耐會更新一次？", a:["每日","每兩星期","每月","每半年"], correct:1, exp:"人類味蕾細胞嘅平均壽命大約 10–14 日，所以舌頭被燙傷後好快就可以恢復味覺。"},
+  {id:40, cat:"食物", q:"人感覺嘅「味道」大約有幾多 % 其實係嚟自嗅覺？", a:["約 20%","約 40%","約 60%","高達 80%"], correct:3, exp:"鼻塞嗰陣食嘢冇味，就係因為「味道」其實高達 80% 來自嗅覺，舌頭只負責酸甜苦鹹鮮基本五味。"},
+
+  // GEOGRAPHY / MISC 41-50
+  {id:41, cat:"地理 / 雜項", q:"邊一個國家嘅國歌係全世界最長？", a:["烏拉圭","印度","希臘","美國"], correct:2, exp:"希臘國歌《自由頌》(Hymn to Liberty) 一共有 158 段 (verses)，由詩人 Dionysios Solomos 喺 1823 年寫成，1865 年成為希臘正式國歌；正式場合一般只唱頭兩段，因為太長。"},
+  {id:42, cat:"地理 / 雜項", q:"全世界最短嘅地名（只有一個字母）係咩？", a:["Æ","Ø","Å","Ü"], correct:2, exp:"「Å」北歐文意思係「河」，喺挪威、瑞典同丹麥都有同名嘅村莊，只有一個字母；其他選項雖然都係北歐／德文嘅特殊字母，但唔係地名。"},
+  {id:43, cat:"地理 / 雜項", q:"沙地阿拉伯境內有幾多條河？", a:["約 100 條","約 50 條","約 10 條","零（一條都冇）"], correct:3, exp:"沙地阿拉伯境內冇一條永久河流，係全球擁有最多石油但最缺水嘅國家之一。"},
+  {id:44, cat:"地理 / 雜項", q:"全球有超過一半嘅天然湖泊喺邊個國家？", a:["俄羅斯","加拿大","美國","芬蘭"], correct:1, exp:"加拿大擁有全球超過 50% 嘅天然湖泊，因為冰河時期冰川侵蝕形成大量湖泊地形。"},
+  {id:45, cat:"地理 / 雜項", q:"邊個係唯一橫跨四個半球（南北東西）嘅大洲？", a:["亞洲","歐洲","非洲","南美洲"], correct:2, exp:"非洲同時跨越北半球、南半球、東半球同西半球，係唯一一個四個半球都有領土嘅大洲。"},
+  {id:46, cat:"地理 / 雜項", q:"全世界唯一一個冇蚊嘅國家係邊個？", a:["格陵蘭","冰島 (Iceland)","挪威","芬蘭"], correct:1, exp:"由於氣候極端、地質特殊（火山土壤）同水體經常結冰再融化，蚊嘅幼蟲冇辦法完成生命週期，所以冰島完全冇本地蚊種；南極洲都冇蚊但唔算國家。"},
+  {id:47, cat:"地理 / 雜項", q:"一朵典型嘅雲大約重幾多？", a:["約 1,000 公斤","約 10,000 公斤","約 100 萬公噸","約 0 公斤"], correct:2, exp:"一朵中等大小嘅積雲含有約 5 億克嘅水，相當於約 500 公噸；大型積雨雲可以重達 100 萬公噸以上，但因為水滴細小被上升氣流托住所以唔會跌落嚟。"},
+  {id:48, cat:"地理 / 雜項", q:"人類身體大約有幾多 % 係水？", a:["約 30%","約 45%","約 60%","約 90%"], correct:2, exp:"成年人身體約 60% 係水，嬰兒可以高達 75%，老人約 50%；血液約 90% 係水。"},
+  {id:49, cat:"地理 / 雜項", q:"人體入面細菌嘅細胞數目同人類細胞數目比較係點？", a:["細菌細胞少過人類細胞","細菌細胞同人類細胞數量一樣","細菌細胞多過人類細胞","人體入面冇細菌"], correct:2, exp:"人體入面嘅細菌細胞數目其實多過人類自身細胞，比例大約 1.3:1，主要居住喺腸道、皮膚、口腔等部位。"},
+  {id:50, cat:"地理 / 雜項", q:"北極因紐特人 (Eskimos) 用雪櫃做咩？", a:["保持食物凍","防止食物凍到結冰","加熱食物","唔用雪櫃"], correct:1, exp:"喺極地嚴寒氣候下，雪櫃內部溫度反而比外面高，所以因紐特人用雪櫃係用嚟防止食物完全凍硬到食唔到。"}
+];
+
+// Difficulty mapping (from the markdown's guidance)
+const EASY = new Set([1, 15, 20, 38, 42, 44, 45, 48]);
+const MEDIUM = new Set([2, 3, 11, 13, 14, 18, 21, 25, 29, 31, 35, 36, 39, 40, 47]);
+
+function getDifficulty(id) {
+  if (EASY.has(id)) return "easy";
+  if (MEDIUM.has(id)) return "medium";
+  return "hard";
+}
+function getDifficultyLabel(id) {
+  const d = getDifficulty(id);
+  return d === "easy" ? "簡單" : d === "medium" ? "中等" : "困難";
+}
+
+const CATEGORIES = [
+  { name: "🐾 動物類", key: "動物" },
+  { name: "⛪ 基督教 / 教會類", key: "基督教" },
+  { name: "📜 歷史類", key: "歷史" },
+  { name: "🍔 食物類", key: "食物" },
+  { name: "🌍 地理 / 雜項類", key: "地理 / 雜項" }
+];
+
+// ===== STATE =====
+let currentQuestionId = null;
+let progress = JSON.parse(localStorage.getItem("trivia_progress") || "{}");
+
+function saveProgress() {
+  localStorage.setItem("trivia_progress", JSON.stringify(progress));
+}
+
+function resetProgress() {
+  if (confirm("確認要重新開始？所有答題紀錄會清除。")) {
+    progress = {};
+    saveProgress();
+    renderMain();
+  }
+}
+
+// ===== RENDER MAIN PAGE =====
+function renderMain() {
+  const section = document.getElementById("category-section");
+  section.innerHTML = "";
+
+  CATEGORIES.forEach(cat => {
+    const catQuestions = QUESTIONS.filter(q => q.cat === cat.key);
+    const div = document.createElement("div");
+    div.className = "category";
+    div.innerHTML = `<h2>${cat.name}</h2><div class="question-grid"></div>`;
+    const grid = div.querySelector(".question-grid");
+    catQuestions.forEach(q => {
+      const btn = document.createElement("button");
+      btn.className = `q-btn ${getDifficulty(q.id)}`;
+      if (progress[q.id]) btn.classList.add("done");
+      btn.textContent = q.id;
+      btn.onclick = () => showQuestion(q.id);
+      grid.appendChild(btn);
+    });
+    section.appendChild(div);
+  });
+
+  // Stats
+  const answered = Object.keys(progress).length;
+  const correct = Object.values(progress).filter(v => v === "correct").length;
+  document.getElementById("stat-correct").textContent = correct;
+  document.getElementById("stat-total").textContent = answered;
+}
+
+// ===== SHOW QUESTION =====
+function showQuestion(id) {
+  currentQuestionId = id;
+  const q = QUESTIONS.find(qq => qq.id === id);
+  document.getElementById("q-number").textContent = `第 ${q.id} 題`;
+  const diff = getDifficulty(id);
+  const diffTag = document.getElementById("q-difficulty");
+  diffTag.textContent = getDifficultyLabel(id);
+  diffTag.className = `difficulty-tag diff-${diff}`;
+  document.getElementById("question-text").textContent = q.q;
+
+  const grid = document.getElementById("answers-grid");
+  grid.innerHTML = "";
+  const letters = ["A", "B", "C", "D"];
+  const colorClasses = ["ans-a", "ans-b", "ans-c", "ans-d"];
+
+  q.a.forEach((ans, i) => {
+    const btn = document.createElement("button");
+    btn.className = `answer-btn ${colorClasses[i]}`;
+    btn.innerHTML = `<div class="answer-shape">${letters[i]}</div><div>${ans}</div>`;
+    btn.onclick = () => selectAnswer(i);
+    grid.appendChild(btn);
+  });
+
+  switchPage("page-question");
+}
+
+// ===== SELECT ANSWER =====
+function selectAnswer(idx) {
+  const q = QUESTIONS.find(qq => qq.id === currentQuestionId);
+  const isCorrect = idx === q.correct;
+
+  // Save progress
+  progress[q.id] = isCorrect ? "correct" : "wrong";
+  saveProgress();
+
+  // Disable all and highlight (only reveal correct answer if user got it right)
+  const buttons = document.querySelectorAll("#answers-grid .answer-btn");
+  buttons.forEach((b, i) => {
+    b.disabled = true;
+    if (i === idx) {
+      b.classList.add(isCorrect ? "selected-correct" : "selected-wrong");
+    }
+    if (isCorrect && i === q.correct) {
+      b.classList.add("correct-reveal");
+    }
+  });
+
+  // Show result after short delay
+  setTimeout(() => showResult(isCorrect), 900);
+}
+
+// ===== SHOW RESULT =====
+function showResult(isCorrect) {
+  const q = QUESTIONS.find(qq => qq.id === currentQuestionId);
+  const banner = document.getElementById("result-banner");
+  const icon = document.getElementById("result-icon");
+  const title = document.getElementById("result-title");
+  const sub = document.getElementById("result-sub");
+
+  const reveal = document.getElementById("answer-reveal");
+
+  if (isCorrect) {
+    banner.className = "result-banner correct";
+    icon.textContent = "🎉";
+    title.textContent = "答啱！";
+    sub.textContent = "勁正，繼續挑戰下一題";
+
+    const letters = ["A", "B", "C", "D"];
+    document.getElementById("correct-answer-text").textContent =
+      `${letters[q.correct]}. ${q.a[q.correct]}`;
+    document.getElementById("explanation").textContent = q.exp;
+    reveal.style.display = "block";
+  } else {
+    banner.className = "result-banner wrong";
+    icon.textContent = "😅";
+    title.textContent = "唔啱呀";
+    sub.textContent = "返主頁再試多次！";
+    reveal.style.display = "none";
+  }
+
+  switchPage("page-result");
+}
+
+// ===== NAVIGATION =====
+function switchPage(pageId) {
+  document.querySelectorAll(".page").forEach(p => p.classList.remove("active"));
+  document.getElementById(pageId).classList.add("active");
+  window.scrollTo(0, 0);
+}
+
+function goHome() {
+  renderMain();
+  switchPage("page-main");
+}
+
+function nextQuestion() {
+  const nextId = currentQuestionId < 50 ? currentQuestionId + 1 : 1;
+  showQuestion(nextId);
+}
+
+// ===== INIT =====
+renderMain();
+</script>
+</body>
+</html>
