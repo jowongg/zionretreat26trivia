@@ -4,7 +4,9 @@ A Kahoot-style trivia game with 50 quirky-knowledge questions in Cantonese Chine
 
 ## Play
 
-Just open [`trivia_game.html`](./trivia_game.html) in any modern browser — no server, build step, or dependencies required.
+🎯 **Play online:** https://jowongg.github.io/zionretreat26trivia/trivia_game.html
+
+Or open [`trivia_game.html`](./trivia_game.html) locally in any modern browser — no server, build step, or dependencies required.
 
 ## Features
 
